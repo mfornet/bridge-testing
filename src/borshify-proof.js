@@ -3,7 +3,7 @@ const Web3 = require('web3');
 const ethereumConfig = require("./json/ethereum-config.json");
 const web3 = new Web3(ethereumConfig.JsonRpc);
 
-function borshifyOutcomeProof (proof) {
+function borshifyOutcomeProof(proof) {
   const statusToBuffer = (status) => {
     //console.log(status)
     if ('SuccessValue' in status) {
@@ -75,7 +75,7 @@ function borshifyOutcomeProof (proof) {
       web3.utils
         .toBN(
           proof.block_header_lite.inner_lite.timestamp_nanosec ||
-            proof.block_header_lite.inner_lite.timestamp
+          proof.block_header_lite.inner_lite.timestamp
         )
         .toBuffer('le', 8),
       bs58.decode(proof.block_header_lite.inner_lite.next_bp_hash),

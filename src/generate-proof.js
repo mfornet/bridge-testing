@@ -1,9 +1,9 @@
-const Tree = require('merkle-patricia-tree') ;
+const Tree = require('merkle-patricia-tree');
 const { encode } = require('eth-util-lite');
-const { Header, Proof, Receipt, Log } = require('eth-object'); 
-const { promisfy } = require('promisfy'); 
-const utils = require('ethereumjs-util'); 
-const { serialize: serializeBorsh } = require('near-api-js/lib/utils/serialize'); 
+const { Header, Proof, Receipt, Log } = require('eth-object');
+const { promisfy } = require('promisfy');
+const utils = require('ethereumjs-util');
+const { serialize: serializeBorsh } = require('near-api-js/lib/utils/serialize');
 const Web3 = require('web3');
 const ethereumConfig = require('./json/ethereum-config.json');
 const connectorAbi = require('./json/connector.json');
@@ -12,7 +12,7 @@ const web3 = new Web3(ethereumConfig.JsonRpc);
 const ethTokenLocker = new web3.eth.Contract(connectorAbi, ethereumConfig.ConnectorAddress); //, {from: ethereumConfig.Address}
 
 class BorshProof {
-  constructor (proof) {
+  constructor(proof) {
     Object.assign(this, proof)
   }
 };
@@ -34,10 +34,12 @@ const proofBorshSchema = new Map([
 // Compute proof that Locked event was fired in Ethereum. This proof can then
 // be passed to the FungibleTokenFactory contract, which verifies the proof
 // against a Prover contract.
-async function findProof (lockTxHash) {
+async function findProof(lockTxHash) {
   //console.log(lockTxHash);
   const receipt = await web3.eth.getTransactionReceipt(lockTxHash);
+  console.log(receipt);
   const block = await web3.eth.getBlock(receipt.blockNumber);
+  console.log(block);
   const tree = await buildTree(block);
   //console.log(block);
   const proof = await extractProof(
@@ -47,10 +49,15 @@ async function findProof (lockTxHash) {
   );
   //console.log(proof);
 
+  console.log(lockTxHash, receipt.blockNumber)
+  const result = await ethTokenLocker.getPastEvents('Locked', {
+  });
+  console.log(result);
   const [lockedEvent] = await ethTokenLocker.getPastEvents('Locked', {
     filter: { transactionHash: lockTxHash },
     fromBlock: receipt.blockNumber
   });
+  console.log(lockedEvent)
   //console.log(lockedEvent);
   // `log.logIndex` does not necessarily match the log's order in the array of logs
   const logIndexInArray = receipt.logs.findIndex(
@@ -72,9 +79,9 @@ async function findProof (lockTxHash) {
 
 exports.findProof = findProof;
 
-async function buildTree (block) {
+async function buildTree(block) {
   const blockReceipts = await Promise.all(
-    block.transactions.map(t => 
+    block.transactions.map(t =>
       web3.eth.getTransactionReceipt(t))
   );
 
@@ -91,7 +98,7 @@ async function buildTree (block) {
   return tree;
 }
 
-async function extractProof (block, tree, transactionIndex) {
+async function extractProof(block, tree, transactionIndex) {
   const [, , stack] = await promisfy(
     tree.findPath,
     tree
